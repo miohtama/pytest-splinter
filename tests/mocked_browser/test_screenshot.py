@@ -25,6 +25,7 @@ def test_browser_screenshot_error(mocked_warn, mocked_browser, testdir):
     """Test warning with error during taking screenshots on test failure."""
     mocked_browser.return_value.driver.save_screenshot.side_effect = Exception('Failed')
     mocked_browser.return_value.driver_name = 'firefox'
+    mocked_browser.return_value.driver.profile.profile_dir = 'some_dir'
     mocked_browser.return_value.html = u'<html>'
     testdir.inline_runsource("""
         def test_screenshot(browser):

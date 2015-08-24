@@ -8,7 +8,7 @@ def splinter_session_scoped_browser():
     return True
 
 
-def test_browser_instance_getter(request, browser_instance_getter):
+def test_browser_instance_getter(request, browser_pool, browser_instance_getter):
     """Test browser_instance_getter fixture.
 
     Test that it return a function and if run this function then each time we will get

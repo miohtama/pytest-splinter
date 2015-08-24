@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.6.7
+-----
+
+- clean cookies file between tests for firefox (bubenkoff)
+
 1.6.6
 -----
 

@@ -12,6 +12,7 @@ except ImportError:
 import mimetypes  # pragma: no cover
 import os.path
 import re
+from os import unlink
 
 import pytest  # pragma: no cover
 import splinter  # pragma: no cover
@@ -169,9 +170,19 @@ def splinter_firefox_profile_preferences():
 
 
 @pytest.fixture(scope='session')
-def splinter_firefox_profile_directory():
+def splinter_firefox_profile_directory(session_tmpdir):
     """Firefox profile directory."""
-    return os.path.join(os.path.dirname(__file__), 'profiles', 'firefox')
+    path = session_tmpdir.join('profiles', 'firefox').ensure(dir=True)
+    return path.strpath
+
+
+def clean_cookies(browser, webdriver_name):
+    """Clean browser cookies."""
+    browser.cookies.delete()
+    if webdriver_name == 'firefox':
+        path = os.path.join(browser.driver.profile.profile_dir, 'cookies.sqlite')
+        if os.path.exists(path):
+            unlink(path)
 
 
 @pytest.fixture(scope='session')
@@ -308,7 +319,6 @@ def splinter_screenshot_getter_html(splinter_screenshot_encoding):
 @pytest.fixture(scope='session')
 def browser_instance_getter(
         browser_patches,
-        splinter_session_scoped_browser,
         splinter_browser_load_condition,
         splinter_browser_load_timeout,
         splinter_download_file_types,
@@ -356,6 +366,7 @@ def browser_instance_getter(
 
     def prepare_browser(request, parent):
         splinter_webdriver = request.getfuncargvalue('splinter_webdriver')
+        splinter_session_scoped_browser = request.getfuncargvalue('splinter_session_scoped_browser')
         browser_key = id(parent)
         browser = browser_pool.get(browser_key)
         if not splinter_session_scoped_browser:
@@ -371,10 +382,12 @@ def browser_instance_getter(
                 browser.driver.implicitly_wait(splinter_selenium_implicit_wait)
                 browser.driver.set_speed(splinter_selenium_speed)
                 browser.driver.command_executor.set_timeout(splinter_selenium_socket_timeout)
-                browser.driver.command_executor._conn.timeout = splinter_selenium_socket_timeout
+                _conn = getattr(browser.driver.command_executor, '_conn', None)
+                if _conn:
+                    _conn.timeout = splinter_selenium_socket_timeout
                 if splinter_window_size:
                     browser.driver.set_window_size(*splinter_window_size)
-            browser.cookies.delete()
+            clean_cookies(browser, splinter_webdriver)
             if hasattr(browser, 'driver'):
                 browser.visit_condition = splinter_browser_load_condition
                 browser.visit_condition_timeout = splinter_browser_load_timeout
@@ -454,7 +467,7 @@ def pytest_runtest_makereport(item, call, __multicall__):
 
 
 @pytest.fixture
-def browser(request, browser_instance_getter):
+def browser(request, splinter_session_scoped_browser, splinter_webdriver, browser_instance_getter):
     """Browser fixture."""
     return browser_instance_getter(request, browser)
 

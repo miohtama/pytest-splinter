@@ -33,6 +33,11 @@ Fixtures
 * browser
     Get the splinter's Browser. Fixture is underneath session scoped, so browser process is started
     once per test session, but the state of the browser will be clean (current page is ``blank``, cookies clean).
+    Note that full cookies clean is only supported for `firefox` webdriver only (for other webdrivers, only cookies
+    of the currently visited domain will be cleared). Selenium does not provide direct
+    interfaces for cleaning up the cookies of the browser, so for firefox pytest-splinter just removes the
+    `cookies.sqlite` file stored in a profile directory. For other drivers, it should be possible to clean all
+    cookies as well, this is to be implemented.
 
 * session_browser
     The same as ``browser`` except the lifetime. This fixture is session-scoped so will only be finalized at the
